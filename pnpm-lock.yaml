@@ -21,6 +21,20 @@ importers:
         specifier: ^3.0.0
         version: 3.2.7(@types/node@22.20.1)
 
+  packages/agent-rules: {}
+
+  packages/cli:
+    dependencies:
+      '@wattprint/agent-rules':
+        specifier: workspace:*
+        version: link:../agent-rules
+      '@wattprint/core':
+        specifier: workspace:*
+        version: link:../core
+      '@wattprint/measure':
+        specifier: workspace:*
+        version: link:../measure
+
   packages/core:
     devDependencies:
       '@tgwf/co2':

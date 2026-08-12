@@ -1,0 +1,34 @@
+{
+  "name": "@wattprint/cli",
+  "version": "0.1.0",
+  "description": "wattprint CLI: scan, diff, and budget-check the modeled carbon cost of websites.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "wattprint": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@wattprint/agent-rules": "workspace:*",
+    "@wattprint/core": "workspace:*",
+    "@wattprint/measure": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
