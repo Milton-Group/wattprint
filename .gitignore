@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.wattprint/
+fixtures/**/assets/generated/
+coverage/
+.DS_Store

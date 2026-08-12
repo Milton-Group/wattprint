@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wattprint.dev/schema/wattprint.config.schema.json",
+  "title": "wattprint configuration",
+  "description": "Configuration for wattprint carbon estimation, budgets, and CI checks. All emission figures produced from this config are modeled estimates, not measurements.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["configVersion"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "configVersion": {
+      "const": 1,
+      "description": "Config format version. Carried into every result object for reproducibility."
+    },
+    "model": {
+      "type": "string",
+      "default": "swdm-v4",
+      "description": "Estimation model id. Built-in: swdm-v4 (Sustainable Web Design Model v4)."
+    },
+    "traffic": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Traffic assumptions used to weight routes and annualize totals.",
+      "properties": {
+        "pageviewsPerMonth": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Total pageviews per month across all routes. Used for annualized figures, which are traffic-dependent."
+        },
+        "routeWeights": {
+          "type": "object",
+          "description": "Relative traffic share per route path (normalized internally). Routes not listed share the remainder equally.",
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        },
+        "returningVisitorRatio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Fraction of pageviews served to returning visitors, modeled with warm-cache transfer sizes when available."
+        },
+        "audienceGridIntensity": {
+          "description": "Grid intensity of the audience's electricity, in g CO2e/kWh. A single number, or a geo-weighted table whose shares should sum to 1. Omit to use the model's global default.",
+          "oneOf": [
+            { "type": "number", "exclusiveMinimum": 0 },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["share", "gCO2ePerKwh"],
+                "properties": {
+                  "share": { "type": "number", "minimum": 0, "maximum": 1 },
+                  "gCO2ePerKwh": { "type": "number", "exclusiveMinimum": 0 }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "infra": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Hosting and delivery infrastructure assumptions.",
+      "properties": {
+        "hostingProvider": {
+          "type": "string",
+          "description": "Free-text provider name, recorded in results for auditability."
+        },
+        "regions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Hosting regions (informational, recorded in results)."
+        },
+        "hostingGridIntensity": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Grid intensity of hosting electricity in g CO2e/kWh. Ignored when greenHostingVerified is true."
+        },
+        "greenHostingVerified": {
+          "type": "boolean",
+          "default": false,
+          "description": "Set only when the host's green-energy claim is externally verified (e.g. Green Web Foundation dataset). Zeroes the datacenter operational-electricity segment; embodied emissions still count."
+        },
+        "cdnCacheHitRatio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Fraction of requests served from CDN edge cache rather than origin."
+        }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Carbon and transfer budgets checked by `wattprint budget` and CI.",
+      "properties": {
+        "maxGramsPerPageview": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Maximum modeled g CO2e per pageview (site-weighted average)."
+        },
+        "maxTransferKbPerPageview": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Maximum first-visit wire transfer per pageview, in KB (1000 bytes)."
+        },
+        "perRoute": {
+          "type": "object",
+          "description": "Per-route overrides of the two budget limits.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "maxGramsPerPageview": { "type": "number", "exclusiveMinimum": 0 },
+              "maxTransferKbPerPageview": { "type": "number", "exclusiveMinimum": 0 }
+            }
+          }
+        },
+        "failCiOnBreach": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, `wattprint budget` exits nonzero on any breach."
+        }
+      }
+    },
+    "measure": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Measurement settings for deterministic CI runs.",
+      "properties": {
+        "routes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["/"],
+          "description": "Route paths to measure."
+        },
+        "runs": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Measurement repetitions per route; the median run is reported."
+        },
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "width": { "type": "integer", "minimum": 1, "default": 1366 },
+            "height": { "type": "integer", "minimum": 1, "default": 768 }
+          }
+        }
+      }
+    }
+  }
+}
