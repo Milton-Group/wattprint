@@ -1,0 +1,30 @@
+{
+  "name": "@wattprint/measure",
+  "version": "0.1.0",
+  "description": "Deterministic headless-browser page measurement for wattprint: wire bytes by type, requests, third-party share, compression and cache headers, cold and warm passes.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@wattprint/core": "workspace:*",
+    "playwright": "^1.49.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

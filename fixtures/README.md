@@ -9,8 +9,9 @@ before/after example:
   fold, one deferred bundle, a subset font, no analytics tag.
 
 Bulky assets are not committed. `pnpm fixtures:build` generates them
-deterministically (seeded PRNG) into `*/assets/generated/`. Binary formats are
-incompressible random bytes (like real JPEG/WOFF2 payloads); JS/CSS are
-repetitive generated text so gzip/brotli behave realistically. The "images"
-are not decodable — measurement only cares about wire bytes, requests, and
-headers.
+deterministically (seeded PRNG) into `*/assets/generated/`. Images are real
+decodable PNGs filled with random pixels — Chromium aborts downloads of
+invalid image bytes, and random pixels keep them incompressible like real
+photos. Fonts are random bytes (browsers download fonts fully before
+validating); JS/CSS are repetitive generated text so gzip behaves
+realistically.
