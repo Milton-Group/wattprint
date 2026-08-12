@@ -21,6 +21,8 @@ importers:
         specifier: ^3.0.0
         version: 3.2.7(@types/node@22.20.1)
 
+  packages/action: {}
+
   packages/agent-rules: {}
 
   packages/cli:
@@ -49,6 +51,8 @@ importers:
       playwright:
         specifier: ^1.49.0
         version: 1.62.1
+
+  packages/schedule: {}
 
 packages:
 

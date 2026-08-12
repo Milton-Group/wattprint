@@ -1,0 +1,26 @@
+{
+  "name": "@wattprint/schedule",
+  "version": "0.1.0",
+  "description": "Carbon-aware scheduling for deferrable jobs: pluggable grid-intensity providers and a lowest-carbon window picker. v1 ships the interface and a static-data provider.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
