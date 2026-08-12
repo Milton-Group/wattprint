@@ -1,0 +1,15 @@
+{
+  "name": "@wattprint/action",
+  "version": "0.1.0",
+  "description": "GitHub composite action posting a sticky modeled-carbon diff comment on pull requests. Distributed via the repository, not npm.",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "node --check scripts/render.mjs && node --check scripts/comment.mjs",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -20,3 +20,29 @@ jobs:
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test
+
+  action-e2e:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm fixtures:build
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Run the action against the fixture twins
+        uses: ./packages/action
+        with:
+          base-dir: fixtures/heavy-site
+          head-dir: fixtures/optimized-site
+          config-path: fixtures/wattprint.config.json
+          runs: "1"
+          cli: node ${{ github.workspace }}/packages/cli/dist/bin.js
+          fail-on-breach: "true"

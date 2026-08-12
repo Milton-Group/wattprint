@@ -1,0 +1,52 @@
+# wattprint GitLab CI template
+#
+# Usage in .gitlab-ci.yml:
+#
+#   include:
+#     - remote: https://raw.githubusercontent.com/Milton-Group/wattprint/main/packages/action/gitlab/wattprint.gitlab-ci.yml
+#   wattprint:
+#     variables:
+#       WATTPRINT_BUILD_COMMAND: "npm ci && npm run build"
+#       WATTPRINT_OUTPUT_DIR: "dist"
+#
+# Posts a note on the merge request when WATTPRINT_MR_TOKEN (a token with
+# `api` scope) is set; otherwise the report only appears in the job log and
+# artifacts. All figures are modeled estimates, not measurements.
+
+wattprint:
+  image: mcr.microsoft.com/playwright:v1.49.1-noble
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    WATTPRINT_BUILD_COMMAND: "npm ci && npm run build"
+    WATTPRINT_OUTPUT_DIR: "dist"
+    WATTPRINT_ROUTES: "/"
+    WATTPRINT_RUNS: "3"
+  script:
+    - bash -c "$WATTPRINT_BUILD_COMMAND"
+    - npx --yes @wattprint/cli@latest scan "$WATTPRINT_OUTPUT_DIR" --routes "$WATTPRINT_ROUTES" --runs "$WATTPRINT_RUNS" --json --out head-scan.json
+    - git fetch --depth=1 origin "$CI_MERGE_REQUEST_DIFF_BASE_SHA"
+    - git worktree add base-src "$CI_MERGE_REQUEST_DIFF_BASE_SHA"
+    - (cd base-src && bash -c "$WATTPRINT_BUILD_COMMAND")
+    - npx --yes @wattprint/cli@latest scan "base-src/$WATTPRINT_OUTPUT_DIR" --routes "$WATTPRINT_ROUTES" --runs "$WATTPRINT_RUNS" --json --out base-scan.json
+    - npx --yes @wattprint/cli@latest diff base-scan.json head-scan.json | tee wattprint-diff.txt
+    - |
+      if [ -f wattprint.config.json ]; then
+        npx --yes @wattprint/cli@latest budget head-scan.json | tee wattprint-budget.txt || test $? -eq 2
+      fi
+    - |
+      if [ -n "$WATTPRINT_MR_TOKEN" ]; then
+        BODY=$(printf '## wattprint — modeled carbon impact\n```\n%s\n```\n' "$(cat wattprint-diff.txt)")
+        curl --fail-with-body --request POST \
+          --header "PRIVATE-TOKEN: $WATTPRINT_MR_TOKEN" \
+          --data-urlencode "body=$BODY" \
+          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes"
+      fi
+  artifacts:
+    paths:
+      - base-scan.json
+      - head-scan.json
+      - wattprint-diff.txt
+      - wattprint-budget.txt
+    when: always

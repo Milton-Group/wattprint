@@ -1,0 +1,18 @@
+{
+  "$schema": "../packages/core/schema/wattprint.config.schema.json",
+  "configVersion": 1,
+  "model": "swdm-v4",
+  "traffic": {
+    "pageviewsPerMonth": 100000,
+    "returningVisitorRatio": 0.25
+  },
+  "budgets": {
+    "maxGramsPerPageview": 0.1,
+    "maxTransferKbPerPageview": 600,
+    "failCiOnBreach": true
+  },
+  "measure": {
+    "routes": ["/"],
+    "runs": 1
+  }
+}

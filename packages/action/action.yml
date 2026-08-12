@@ -1,0 +1,157 @@
+name: "wattprint carbon diff"
+description: >
+  Modeled CO2e diff for pull requests: measures base and head builds, posts a
+  sticky PR comment with per-route deltas and budget status. All figures are
+  modeled estimates under a published methodology, not measurements.
+author: "wattprint"
+branding:
+  icon: "zap"
+  color: "green"
+
+inputs:
+  build-command:
+    description: "Command that builds the site (run for base and head unless a prebuilt dir is given)"
+    required: false
+    default: ""
+  output-dir:
+    description: "Static build output directory, relative to the repo root"
+    required: false
+    default: "dist"
+  base-dir:
+    description: "Prebuilt base output path; skips checking out and building the base ref"
+    required: false
+    default: ""
+  head-dir:
+    description: "Prebuilt head output path; skips building the head ref"
+    required: false
+    default: ""
+  routes:
+    description: "Comma-separated routes to measure"
+    required: false
+    default: "/"
+  runs:
+    description: "Measurement runs per route (median kept)"
+    required: false
+    default: "3"
+  config-path:
+    description: "Path to wattprint.config.json"
+    required: false
+    default: "wattprint.config.json"
+  fail-on-breach:
+    description: "Fail the job when the head build breaches configured budgets"
+    required: false
+    default: "false"
+  github-token:
+    description: "Token used to post the sticky PR comment"
+    required: false
+    default: ${{ github.token }}
+  cli:
+    description: "Command that runs the wattprint CLI (override to pin a version or use a local build)"
+    required: false
+    default: "npx --yes @wattprint/cli@latest"
+  dry-run:
+    description: "Render the comment to the step summary instead of posting it"
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Restore cached base measurement
+      id: base-cache
+      if: github.event_name == 'pull_request'
+      uses: actions/cache@v4
+      with:
+        path: .wattprint-ci/base-scan.json
+        key: wattprint-base-${{ github.event.pull_request.base.sha }}-${{ inputs.routes }}-${{ inputs.runs }}
+
+    - name: Prepare base build
+      if: github.event_name == 'pull_request' && steps.base-cache.outputs.cache-hit != 'true' && inputs.base-dir == ''
+      shell: bash
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        BUILD_COMMAND: ${{ inputs.build-command }}
+      run: |
+        set -euo pipefail
+        if [ -z "$BUILD_COMMAND" ]; then
+          echo "::error::Either base-dir or build-command must be provided"
+          exit 1
+        fi
+        mkdir -p .wattprint-ci
+        git fetch --no-tags --depth=1 origin "$BASE_SHA"
+        git worktree add .wattprint-ci/base-src "$BASE_SHA"
+        cd .wattprint-ci/base-src
+        bash -c "$BUILD_COMMAND"
+
+    - name: Measure base
+      if: github.event_name == 'pull_request' && steps.base-cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        CLI: ${{ inputs.cli }}
+        BASE_DIR: ${{ inputs.base-dir }}
+        OUTPUT_DIR: ${{ inputs.output-dir }}
+        ROUTES: ${{ inputs.routes }}
+        RUNS: ${{ inputs.runs }}
+        CONFIG_PATH: ${{ inputs.config-path }}
+      run: |
+        set -euo pipefail
+        mkdir -p .wattprint-ci
+        DIR="${BASE_DIR:-.wattprint-ci/base-src/$OUTPUT_DIR}"
+        CONFIG_ARGS=""
+        [ -f "$CONFIG_PATH" ] && CONFIG_ARGS="--config $CONFIG_PATH"
+        $CLI scan "$DIR" --routes "$ROUTES" --runs "$RUNS" $CONFIG_ARGS --json --out .wattprint-ci/base-scan.json > /dev/null
+
+    - name: Build head
+      if: inputs.head-dir == '' && inputs.build-command != ''
+      shell: bash
+      env:
+        BUILD_COMMAND: ${{ inputs.build-command }}
+      run: |
+        set -euo pipefail
+        bash -c "$BUILD_COMMAND"
+
+    - name: Measure head, diff, and check budgets
+      shell: bash
+      env:
+        CLI: ${{ inputs.cli }}
+        HEAD_DIR: ${{ inputs.head-dir }}
+        OUTPUT_DIR: ${{ inputs.output-dir }}
+        ROUTES: ${{ inputs.routes }}
+        RUNS: ${{ inputs.runs }}
+        CONFIG_PATH: ${{ inputs.config-path }}
+      run: |
+        set -euo pipefail
+        mkdir -p .wattprint-ci
+        DIR="${HEAD_DIR:-$OUTPUT_DIR}"
+        CONFIG_ARGS=""
+        [ -f "$CONFIG_PATH" ] && CONFIG_ARGS="--config $CONFIG_PATH"
+        $CLI scan "$DIR" --routes "$ROUTES" --runs "$RUNS" $CONFIG_ARGS --json --out .wattprint-ci/head-scan.json > /dev/null
+        if [ -f .wattprint-ci/base-scan.json ]; then
+          $CLI diff .wattprint-ci/base-scan.json .wattprint-ci/head-scan.json $CONFIG_ARGS --json --out .wattprint-ci/diff.json > /dev/null
+        fi
+        if [ -f "$CONFIG_PATH" ]; then
+          set +e
+          $CLI budget .wattprint-ci/head-scan.json $CONFIG_ARGS --json --out .wattprint-ci/budget.json > /dev/null
+          BUDGET_EXIT=$?
+          set -e
+          if [ "$BUDGET_EXIT" -ne 0 ] && [ "$BUDGET_EXIT" -ne 2 ]; then
+            exit "$BUDGET_EXIT"
+          fi
+        fi
+
+    - name: Post sticky PR comment
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        WATTPRINT_DRY_RUN: ${{ inputs.dry-run }}
+      run: node "${{ github.action_path }}/scripts/comment.mjs" .wattprint-ci
+
+    - name: Fail on budget breach
+      if: inputs.fail-on-breach == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [ -f .wattprint-ci/budget.json ] && [ "$(node -p 'JSON.parse(require("fs").readFileSync(".wattprint-ci/budget.json","utf8")).breached')" = "true" ]; then
+          echo "::error::wattprint budget breached"
+          exit 1
+        fi
