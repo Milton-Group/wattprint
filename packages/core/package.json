@@ -1,0 +1,31 @@
+{
+  "name": "@wattprint/core",
+  "version": "0.1.0",
+  "description": "Carbon estimation engine for web pages — Sustainable Web Design Model v4 with pluggable methodologies. All outputs are modeled estimates.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./schema/wattprint.config.schema.json": "./schema/wattprint.config.schema.json"
+  },
+  "files": [
+    "dist",
+    "schema"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@tgwf/co2": "^0.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

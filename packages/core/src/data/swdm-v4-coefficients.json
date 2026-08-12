@@ -1,0 +1,22 @@
+{
+  "model": "swdm-v4",
+  "coefficientsVersion": "swdm-v4.2024",
+  "source": "Sustainable Web Design Model v4 (sustainablewebdesign.org/estimating-digital-emissions), coefficient values as published in the reference implementation co2.js v0.19.0 (thegreenwebfoundation.org)",
+  "gigabyteBytes": 1000000000,
+  "operationalKwhPerGb": {
+    "dataCenter": 0.055,
+    "network": 0.059,
+    "device": 0.08
+  },
+  "embodiedKwhPerGb": {
+    "dataCenter": 0.012,
+    "network": 0.013,
+    "device": 0.081
+  },
+  "globalGridIntensityGCO2ePerKwh": 494,
+  "notes": {
+    "globalGridIntensity": "Global average grid intensity (Ember yearly electricity data). Used for all segments unless overridden.",
+    "greenHosting": "A green-hosting factor of 1 removes the data-center operational-electricity emissions only; embodied emissions always remain.",
+    "embodiedGridIntensity": "Embodied emissions always use the global grid intensity per the published model, regardless of segment overrides."
+  }
+}
