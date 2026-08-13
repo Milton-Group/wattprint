@@ -1,8 +1,12 @@
 name: Release
 
+# Publishes via changesets once the NPM_TOKEN secret exists (the @wattprint
+# npm scope must be claimed first). Until then every step no-ops green
+# instead of failing each push to main.
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency: release-${{ github.ref }}
 
@@ -14,14 +18,30 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
+      - name: Detect NPM token
+        id: npm
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "NPM_TOKEN not configured; skipping release." >> "$GITHUB_STEP_SUMMARY"
+          fi
       - uses: actions/checkout@v4
+        if: steps.npm.outputs.present == 'true'
       - uses: pnpm/action-setup@v4
+        if: steps.npm.outputs.present == 'true'
       - uses: actions/setup-node@v4
+        if: steps.npm.outputs.present == 'true'
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        if: steps.npm.outputs.present == 'true'
       - name: Create release PR or publish
+        if: steps.npm.outputs.present == 'true'
         uses: changesets/action@v1
         with:
           publish: pnpm release

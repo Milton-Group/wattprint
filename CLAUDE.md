@@ -24,8 +24,9 @@ references stay in this file and `.claude/` (not shipped to npm).
 
 - `pnpm install && pnpm fixtures:build && pnpm build && pnpm test` — the full
   local loop. Fixture assets are generated, never committed.
-- Measure/CLI tests need a Chromium Playwright can launch: `pnpm exec
-  playwright install chromium`, or set `WATTPRINT_CHROMIUM=<path>` (on Milton
+- Measure/CLI tests need a Chromium Playwright can launch: `pnpm --filter
+  @wattprint/measure exec playwright install chromium` (playwright lives in
+  that package, not the root), or set `WATTPRINT_CHROMIUM=<path>` (on Milton
   Coder/CCR machines: `/opt/pw-browsers/chromium`).
 - Run one package: `pnpm --filter @wattprint/core test`.
 - Release: `pnpm changeset` in the PR; the release workflow publishes on merge.
