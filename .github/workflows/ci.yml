@@ -18,7 +18,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm fixtures:build
       - run: pnpm build
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm --filter @wattprint/measure exec playwright install --with-deps chromium
       - run: pnpm test
 
   action-e2e:
@@ -36,7 +36,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm fixtures:build
       - run: pnpm build
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm --filter @wattprint/measure exec playwright install --with-deps chromium
       - name: Run the action against the fixture twins
         uses: ./packages/action
         with:

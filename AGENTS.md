@@ -15,7 +15,7 @@ tokens, or infra details anywhere in it.
 ### Key commands
 
 - `pnpm install && pnpm fixtures:build && pnpm build && pnpm test`
-- Browser tests: `pnpm exec playwright install chromium`, or set
+- Browser tests: `pnpm --filter @wattprint/measure exec playwright install chromium`, or set
   `WATTPRINT_CHROMIUM=<path to chromium>`
 - Single package: `pnpm --filter @wattprint/<name> test`
 

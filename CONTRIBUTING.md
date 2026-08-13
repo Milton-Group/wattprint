@@ -10,7 +10,7 @@ pnpm test
 ```
 
 `@wattprint/measure` tests need a Chromium Playwright can find:
-`pnpm exec playwright install chromium`, or point `WATTPRINT_CHROMIUM` at an
+`pnpm --filter @wattprint/measure exec playwright install chromium`, or point `WATTPRINT_CHROMIUM` at an
 existing binary.
 
 ## Ground rules
