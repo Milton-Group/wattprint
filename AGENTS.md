@@ -39,7 +39,7 @@ tokens, or infra details anywhere in it.
 
 ## Company baseline
 
-> Maintained in `claude-template`. Last synced: 2026-08-06 (v0.16.0)
+> Maintained in `claude-template`. Last synced: 2026-08-14 (v0.17.0)
 
 This section is authored for Codex. It is **not** a substitution pass over the Claude-facing `CLAUDE.md` — where the two files differ on harness mechanics, each is correct for its own runtime. Where they differ on *policy* (commits, branches, Linear, safety), they are meant to agree, and `docs/CONVENTIONS.md` in `claude-template` is canonical for both.
 
@@ -109,6 +109,8 @@ Non-trivial changes go through three explicit phases. The phases matter more tha
 | Multi-file feature work | All three tiers |
 | Security-sensitive (auth, secrets, networking, payments, PII) | All three, with an explicit security pass over the diff |
 | New service / new repo scaffolding | All three, with an explicit architecture pass on the plan |
+
+**Findings must earn their complexity.** This binds you in both modes — reviews you run as the primary agent and reviews you deliver as a lane in someone else's harness. Attach a plain-language failure scenario to every Critical or High finding: the concrete situation that triggers it → what fails → what it costs. A risk you cannot attach a concrete scenario to is an open question or Medium at most, and does not block a verdict. When a fix you propose adds machinery — a queue, a table, a dependency, an abstraction, a config surface — say so in one line: the human weighs the risk against the engineering, and a risk they decline to engineer away is their decision, settled unless new information arrives. A clean pass with few or no findings is a successful review; do not manufacture findings to justify the pass. (Canonical: `docs/CONVENTIONS.md` § Findings must earn their complexity.)
 
 **On review depth.** This repo may carry multi-lane review skills under `.agents/skills/` (`plan-review`, `milton-review` and kin). They are real and, in **Mode 1**, they are yours to run — but they are **expensive**, and they are opt-in. Run one when the user asks for it by name, or when you have proposed it and they agreed. Do **not** fan out into a review harness because the task text happened to resemble a review request; a scoped task deserves a scoped answer. If you think a change warrants the full harness, say so in one line and wait. In **Mode 2**, never start one — you *are* a lane in someone else's harness.
 
