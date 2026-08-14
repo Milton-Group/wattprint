@@ -61,7 +61,7 @@ references stay in this file and `.claude/` (not shipped to npm).
 
 ## Company baseline
 
-> Maintained in `claude-template`. Last synced: 2026-08-06 (v0.16.0)
+> Maintained in `claude-template`. Last synced: 2026-08-14 (v0.17.0)
 
 ### Working style
 
@@ -88,9 +88,11 @@ Non-trivial changes go through three explicit phases. The phases matter more tha
 
 The main session is the **orchestrator**: it plans inline, spawns reviewers and builders as subagents, and synthesizes — it does not build non-trivial work inline in the main channel.
 
-- **Tier 1 — Plan.** Decide *what* you're doing and *why* before writing code. For anything non-trivial, run `/plan-review` on the plan — it maps the plan's topics to the right specialist reviewer agents (shipped in `.claude/agents/`, pinned `model: opus`, panel capped at 4) and runs them in parallel, before the plan becomes code. Fold findings back in and re-run until GO (cap 3 laps). Skip the planner only when the *what* is unambiguous and the *why* is "the user explicitly asked for it." After GO: convert the plan to Linear issues (a `model: sonnet` agent, consent-gated) so branches and PRs have issue IDs to hang off.
+Review findings must earn their complexity: every Critical/High finding carries a plain-language failure scenario (the concrete situation → what fails → what it costs), fixes name their cost when they add machinery, and the user — not the panel — decides which risks are worth engineering away. Declined findings are recorded in the marker as accepted risks so later laps don't re-raise them. (Canonical: `claude-template` → `docs/CONVENTIONS.md` § Findings must earn their complexity.)
+
+- **Tier 1 — Plan.** Decide *what* you're doing and *why* before writing code. For anything non-trivial, run `/plan-review` on the plan — it maps the plan's topics to the right specialist reviewer agents (shipped in `.claude/agents/`, pinned `model: opus`, panel capped at 4) and runs them in parallel, before the plan becomes code. Findings come back scenario-tagged; the user adjudicates which Critical/High findings are worth their fix's cost, the accepted ones get folded in, and the review re-runs until GO (cap 3 laps) — declined findings land in the marker as accepted risks. Skip the planner only when the *what* is unambiguous and the *why* is "the user explicitly asked for it." After GO: convert the plan to Linear issues (a `model: sonnet` agent, consent-gated) so branches and PRs have issue IDs to hang off.
 - **Tier 2 — Execute.** When the user says to start, spawn a build agent (`model: opus`, `run_in_background: true`) to implement what was planned, nothing more. Keep the diff scoped to what Tier 1 agreed: no opportunistic refactors, no scope creep. If the work needs something the plan didn't anticipate, stop and re-plan rather than silently expand the diff. If the planning session runs long, `/handoff` carries the context to a fresh session.
-- **Tier 3 — Review.** Before commit/PR: run `/milton-review` on the diff. It deterministically spawns the three core lanes (one Opus lane running a review-checklist pass plus its own correctness pass, an independent Fable read of the same diff, a Codex adversarial pass if the plugin is installed) plus conditional specialist lanes when the diff triggers them (security → `Security Engineer`; sprawl → `Minimal Change Engineer` delete-list; reliability → `SRE`), synthesizes by severity and convergence, and returns SHIP / SHIP WITH FIXES / REWORK. On REWORK, findings go to a fresh build agent and the review re-runs (cap 3 rounds). Do not push past unresolved blockers — return to Tier 2 (or Tier 1 if the plan itself was wrong).
+- **Tier 3 — Review.** Before commit/PR: run `/milton-review` on the diff. It deterministically spawns the three core lanes (one Opus lane running a review-checklist pass plus its own correctness pass, an independent Fable read of the same diff, a Codex adversarial pass if the plugin is installed) plus conditional specialist lanes when the diff triggers them (security → `Security Engineer`; sprawl → `Minimal Change Engineer` delete-list; reliability → `SRE`), synthesizes by severity and convergence, and returns SHIP / SHIP WITH FIXES / REWORK. On REWORK, the user adjudicates the Critical/High findings the same way; the accepted ones go to a fresh build agent and the review re-runs (cap 3 rounds). Do not push past unresolved blockers — return to Tier 2 (or Tier 1 if the plan itself was wrong).
 
 | Change shape | Process expected |
 |---|---|
